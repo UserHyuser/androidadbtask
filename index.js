@@ -140,21 +140,25 @@ client.listDevicesWithPaths(async function (err, devices) {
 	});
 	console.log(`Google is starting`)
 
-	await wait(3000).then(async ()=>{
+	await wait(5000).then(async ()=>{
 		await verifyScreenshots('GoogleAppStart')
 	});
 
 	await setTimeout(async function () {
 		client.shell(correctPath, 'input text "Elon%sMusk"', async function () {
-			await wait(2000).then(async ()=>{
+			await wait(5000).then(async ()=>{
 				await verifyScreenshots('GoogleApp').then(async value =>{
 					await client.shell(correctPath, 'input keyevent 66');
 					console.log('Asked for Elon')
 				}).then(async value => {
 					//await client.shell(correctPath, 'input keyevent 3');
-					await wait(3000)
+					await wait(10000)
 					console.log('last');
-					await client.shell(correctPath, 'input swipe 300 300 500 1000');
+					await client.shell(correctPath, 'input swipe 500 500 0 0')
+						/*.then(async value1 => {
+							await wait(100)
+							await client.shell(correctPath, 'input swipe 600 600 0 0')
+						});*/
 				})
 			})
 		}).then(async ()=>{
