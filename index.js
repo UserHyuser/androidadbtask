@@ -98,7 +98,7 @@ async function compareScreenshots(path, action) {
 					// console.log('Screenshots are equal!');
 					resolve(equal);
 				} else {
-					console.log('Screenshots are not equal. May be you did something wrong? Or just emulator is too fckn slow????? Trying again...');
+					console.log(`Screenshots ar'nt equal. May be you did something wrong? Or just emulator is too fckn slow????? Trying again...`);
 					await wait(3000);
 					resolve(false)
 				}
@@ -129,26 +129,23 @@ async function verifyScreenshots(action) {
 
 client.listDevicesWithPaths(async function (err, devices) {
 	try {
-		await exec('adb connect ' + correctPath);
+		await client.shell(correctPath, 'input')
 	} catch (e) {
-		await exec('adb connect ' + correctPath);
-		await setTimeout(function () {
-			console.log('Mannually connected device:' + correctPath)
-		}, 2000)
+		console.log('Device is not connected');
+		process.exit(0);
 	}
 	await devices.forEach(await function (item) {
 		arrDevices.push(item);
 		console.log(item);
 		if (item.id === correctPath) {
 			emulatorDevice = item;
+			if(emulatorDevice.type === 'offline'){
+				console.log('Device is offline');
+				process.exit(0);
+			}
 		}
 	});
-	/*if (emulatorDevice === undefined || emulatorDevice.type === 'offline') {
-		await exec('adb connect 127.0.0.1:62001');
-		await setTimeout(function (){
-			console.log('Mannually connected device:' + correctPath)
-		}, 2000)
-	}*/
+
 	await client.shell(correctPath, 'am start -n com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity', (err) => {
 		if (err) {
 			console.log(err);
@@ -158,6 +155,7 @@ client.listDevicesWithPaths(async function (err, devices) {
 
 	await wait(4000).then(async ()=>{
 		await verifyScreenshots('GoogleAppStart')
+		console.log('Asking for Elon')
 	});
 
 	await wait(1500);
