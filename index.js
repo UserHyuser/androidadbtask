@@ -12,9 +12,9 @@ let emulatorDevice = undefined;
 let arrDevices = [];
 
 /* Additional functions */
-function wait(ms){
-	return new Promise(resolve=>{
-		setTimeout(resolve,ms)
+function wait(ms) {
+	return new Promise(resolve => {
+		setTimeout(resolve, ms)
 	})
 }
 
@@ -42,7 +42,6 @@ async function cropPhoto(path, originalImage) {
 			t = 300;
 			break;
 	}
-
 	return new Promise(async (resolve, reject) => {
 		let content = fs.readFileSync(path + originalImage);
 		await sharp(content).extract({
@@ -60,7 +59,7 @@ async function cropPhoto(path, originalImage) {
 	})
 }
 
-async function createScreenShot(action){
+async function createScreenShot(action) {
 	return new Promise(resolve => {
 		client.shell(correctPath, `screencap -p /sdcard/${action}.png`, function (err, output) {
 			if (err) console.log(err);
@@ -77,23 +76,23 @@ async function createScreenShot(action){
 async function getScreenShot(path, action) {
 	return new Promise((async (resolve, reject) => {
 			await createScreenShot(action)
-			.then(value => {
-				client.pull(correctPath, `/sdcard/${action}.png`, async function (err, transfer) {
-					await transfer.on('end', async function () {
-						// console.log('Saved screenshot of ' + action);
-						resolve('Transferred')
-					});
-					await transfer.pipe(fs.createWriteStream(path + action + '.png'));
+				.then(value => {
+					client.pull(correctPath, `/sdcard/${action}.png`, async function (err, transfer) {
+						await transfer.on('end', async function () {
+							// console.log('Saved screenshot of ' + action);
+							resolve('Transferred')
+						});
+						await transfer.pipe(fs.createWriteStream(path + action + '.png'));
+					})
 				})
-			})
 		}
 	))
 }
 
 async function compareScreenshots(path, action) {
 	return new Promise(async (resolve, reject) => {
-		try{
-			await looksSame( path + 'cropped' + action + '.png', path + 'screenshots/cropped' + action + '.png', async function (error, equal) {
+		try {
+			await looksSame(path + 'cropped' + action + '.png', path + 'screenshots/cropped' + action + '.png', async function (error, equal) {
 				if (equal.equal === true) {
 					// console.log('Screenshots are equal!');
 					resolve(equal);
@@ -139,31 +138,28 @@ client.listDevicesWithPaths(async function (err, devices) {
 		console.log(item);
 		if (item.id === correctPath) {
 			emulatorDevice = item;
-			if(emulatorDevice.type === 'offline'){
+			if (emulatorDevice.type === 'offline') {
 				console.log('Device is offline');
 				process.exit(0);
 			}
 		}
 	});
-
 	await client.shell(correctPath, 'am start -n com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity', (err) => {
 		if (err) {
 			console.log(err);
 		}
 	});
 	console.log(`Google is starting`)
-
-	await wait(4000).then(async ()=>{
+	await wait(4000).then(async () => {
 		await verifyScreenshots('GoogleAppStart')
 		console.log('Asking for Elon')
 	});
-
 	await wait(1500);
 	await (async () => {
 		return new Promise(async (resolve, reject) => {
 			await client.shell(correctPath, 'input text "Elon%sMusk"', async () => {
 				await wait(2000);
-				await verifyScreenshots('GoogleApp').then(async value =>{
+				await verifyScreenshots('GoogleApp').then(async value => {
 					await client.shell(correctPath, 'input keyevent 66');
 					console.log('Ask Google for Elon Musk')
 					resolve('Asked')
@@ -171,65 +167,34 @@ client.listDevicesWithPaths(async function (err, devices) {
 			});
 		})
 	})();
-
 	await wait(4000);
-	await (async () =>{
-		return new Promise(async (resolve,reject)=>{
-			await verifyScreenshots('GoogleIsReady').then(async value =>{
-				await client.shell(correctPath,'input keyevent 93');
+	await (async () => {
+		return new Promise(async (resolve, reject) => {
+			await verifyScreenshots('GoogleIsReady').then(async value => {
+				await client.shell(correctPath, 'input keyevent 93');
 				await wait(700);
-				await client.shell(correctPath,'input keyevent 93');
+				await client.shell(correctPath, 'input keyevent 93');
 				await wait(700);
-				await client.shell(correctPath,'input keyevent 93');
+				await client.shell(correctPath, 'input keyevent 93');
 				console.log('Scrolled')
 				resolve('Ready to click');
 			})
 		})
 	})();
-
 	await wait(3000);
-	await (async () =>{
-		return new Promise(async (resolve,reject)=>{
-			await verifyScreenshots('LoadingPage').then(async value =>{
-				await client.shell(correctPath,'input tap 300 560', async function (err,output) {
+	await (async () => {
+		return new Promise(async (resolve, reject) => {
+			await verifyScreenshots('LoadingPage').then(async value => {
+				await client.shell(correctPath, 'input tap 300 560', async function (err, output) {
 					console.log('Clicked');
 					await wait(6000);
-					await client.shell(correctPath,'input keyevent 3', async function (err,output) {
+					await client.shell(correctPath, 'input keyevent 3', async function (err, output) {
 						console.log('Done');
 					});
 				});
 			})
 		})
 	})();
-
-	console.log('next')
-
-	/*await client.shell(correctPath, 'input text "Elon%sMusk"', async function () {
-		await wait(1000).then(async ()=>{
-			await verifyScreenshots('GoogleApp').then(async value =>{
-				await client.shell(correctPath, 'input keyevent 66');
-				console.log('Asked for Elon')
-			})
-			await wait(7000)
-			console.log('last');
-			client.shell(correctPath,'input keyevent 93', async function (std) {
-				await wait(2000);
-				await client.shell(correctPath,'input keyevent 93', async function (err,output) {
-					await wait(3000);
-					await verifyScreenshots('LoadingPage');
-					let interval = setInterval(async function () {
-						if (output.writable === false) {
-							clearInterval(interval);
-							await client.shell(correctPath,'tap 250 380',function (err,output) {
-								console.log('clicked?')
-								client.shell(correctPath,'tap 250 380')
-							});
-						}
-					}, 100)
-				})
-			})
-		})
-	})*/
 });
 
 
